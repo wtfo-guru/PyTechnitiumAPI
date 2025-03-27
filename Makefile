@@ -2,9 +2,10 @@ SHELL:=/usr/bin/env bash
 
 PROJECT_NAME = $(shell head -10 pyproject.toml|grep ^name | awk '{print $$NF}'|tr -d '"' | tr '-' '_')
 PROJECT_VERSION = $(shell head -10 pyproject.toml|grep ^version | awk '{print $$NF}'|tr -d '"')
+PACKAGE_DIR = src/$(PROJECT_NAME)
 WHEEL_VERSION = $(shell echo $(PROJECT_VERSION)|sed -e 's/-dev/.dev/')
 BUMP_VERSION = $(shell grep ^current_version .bumpversion.cfg | awk '{print $$NF}')
-CONST_VERSION = $(shell grep ^VERSION $(PROJECT_NAME)/constants.py | awk '{print $$NF}'|tr -d '"')
+CONST_VERSION = $(shell grep ^VERSION $(PACKAGE_DIR)/constants.py | awk '{print $$NF}'|tr -d '"')
 TEST_MASK ?= tests/*.py
 
 .PHONY: update
@@ -16,6 +17,7 @@ update:
 vars:
 	@echo "PROJECT_NAME: $(PROJECT_NAME)"
 	@echo "PROJECT_VERSION: $(PROJECT_VERSION)"
+	@echo "PACKAGE_DIR: $(PACKAGE_DIR)"
 	@echo "WHEEL_VERSION: $(WHEEL_VERSION)"
 	@echo "BUMP_VERSION: $(BUMP_VERSION)"
 	@echo "CONST_VERSION: $(CONST_VERSION)"
@@ -32,16 +34,16 @@ endif
 
 .PHONY: black
 black:
-	poetry run isort $(PROJECT_NAME) $(TEST_MASK)
-	poetry run black $(PROJECT_NAME) $(TEST_MASK)
+	poetry run isort $(PACKAGE_DIR) $(TEST_MASK)
+	poetry run black $(PACKAGE_DIR) $(TEST_MASK)
 
 .PHONY: mypy
 mypy: black
-	poetry run mypy $(PROJECT_NAME) $(TEST_MASK)
+	poetry run mypy $(PACKAGE_DIR) $(TEST_MASK)
 
 .PHONY: lint
 lint: mypy
-	poetry run flake8 $(PROJECT_NAME) $(TEST_MASK)
+	poetry run flake8 $(PACKAGE_DIR) $(TEST_MASK)
 	poetry run doc8 -q docs
 
 .PHONY: sunit
